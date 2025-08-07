@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/movie_model.dart';
 import '../../core/services/tmdb_service.dart';
 import '../movie_favorites/favorites_provider.dart';
+import '../watchlist/watchlist_provider.dart';
 
 /// Gelişmiş film kartı widget'ı
 /// Bu widget, Movie modelini kullanır ve favori durumunu dinler
@@ -109,7 +110,7 @@ class MovieCard extends ConsumerWidget {
                     const SizedBox(height: 4),
                     
                     Text(
-                      'Çıkış: ${movie.releaseDate.year}',
+                                             'Çıkış: ${movie.releaseDate?.year ?? 'Bilinmiyor'}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.grey[600],
                       ),
@@ -118,20 +119,47 @@ class MovieCard extends ConsumerWidget {
                 ),
               ),
               
-              // Favori butonu
-              IconButton(
-                onPressed: () {
-                  if (isFavorite) {
-                    operations.removeFromFavorites(movie.id);
-                  } else {
-                    operations.addToFavorites(movie.id);
-                  }
-                },
-                icon: Icon(
-                  isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: isFavorite ? Colors.red : Colors.grey,
+                          // Butonlar
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Favori butonu
+                IconButton(
+                  onPressed: () {
+                    if (isFavorite) {
+                      operations.removeFromFavorites(movie.id);
+                    } else {
+                      operations.addToFavorites(movie.id);
+                    }
+                  },
+                  icon: Icon(
+                    isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: isFavorite ? Colors.red : Colors.grey,
+                  ),
                 ),
-              ),
+                // İzleme listesi butonu
+                Consumer(
+                  builder: (context, ref, child) {
+                    final isInWatchlist = ref.watch(watchlistProvider.notifier).isInWatchlist(movie.id);
+                    final watchlistNotifier = ref.read(watchlistProvider.notifier);
+                    
+                    return IconButton(
+                      onPressed: () {
+                        if (isInWatchlist) {
+                          watchlistNotifier.removeFromWatchlist(movie.id);
+                        } else {
+                          watchlistNotifier.addToWatchlist(movie);
+                        }
+                      },
+                      icon: Icon(
+                        isInWatchlist ? Icons.bookmark : Icons.bookmark_border,
+                        color: isInWatchlist ? Colors.blue : Colors.grey,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
             ],
           ),
         ),

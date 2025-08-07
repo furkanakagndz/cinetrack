@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'features/basic_counter/counter_screen.dart';
 import 'features/movie_favorites/favorites_screen.dart';
 import 'features/movies/movies_screen.dart';
+import 'features/movie_details/movie_detail_screen.dart';
+import 'features/watchlist/watchlist_screen.dart';
 
 void main() {
   runApp(
@@ -122,23 +124,65 @@ class HomeScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Aşama 2 - Film Listesi
-              _buildStageCard(
+                          // Aşama 2 - Film Listesi
+            _buildStageCard(
+              context,
+              'Aşama 2: Film Listesi',
+              'StateNotifier ile karmaşık state yönetimi',
+              [
+                'TMDB API entegrasyonu',
+                'Film arama ve filtreleme',
+                'Pagination ve infinite scroll',
+                'Loading/error durumları',
+              ],
+              Icons.movie,
+              () => Navigator.push(
                 context,
-                'Aşama 2: Film Listesi',
-                'StateNotifier ile karmaşık state yönetimi',
-                [
-                  'TMDB API entegrasyonu',
-                  'Film arama ve filtreleme',
-                  'Pagination ve infinite scroll',
-                  'Loading/error durumları',
-                ],
-                Icons.movie,
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MoviesScreen()),
+                MaterialPageRoute(builder: (context) => const MoviesScreen()),
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Aşama 3 - Film Detayları
+            _buildStageCard(
+              context,
+              'Aşama 3: Film Detayları',
+              'FutureProvider ve async state',
+              [
+                'Film detay sayfası',
+                'FutureProvider kullanımı',
+                'AsyncValue ile state yönetimi',
+                'Family provider kullanımı',
+              ],
+              Icons.info,
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MovieDetailScreen(movieId: 550), // Fight Club
                 ),
               ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Aşama 3 - İzleme Listesi
+            _buildStageCard(
+              context,
+              'Aşama 3: İzleme Listesi',
+              'StateNotifier ile list yönetimi',
+              [
+                'İzleme listesi yönetimi',
+                'Film durumu takibi',
+                'Tab bar ile kategorilendirme',
+                'StateNotifier pattern',
+              ],
+              Icons.list,
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const WatchlistScreen()),
+              ),
+            ),
 
               const SizedBox(height: 16),
 
@@ -161,14 +205,14 @@ class HomeScreen extends StatelessWidget {
 
               _buildStageCard(
                 context,
-                'Aşama 4: İzleme Listesi (Yakında)',
-                'Local storage ve persistence',
+                'Aşama 4: Local Storage (Yakında)',
+                'Persistence ve local storage',
                 [
-                  'İzleme listesi yönetimi',
-                  'Local storage entegrasyonu',
-                  'Persistence pattern',
+                  'SharedPreferences entegrasyonu',
+                  'Veri kalıcılığı',
+                  'Offline kullanım',
                 ],
-                Icons.list,
+                Icons.storage,
                 null, // Henüz aktif değil
                 isEnabled: false,
               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/movie_model.dart';
+import '../movie_details/movie_detail_screen.dart';
 import 'movies_provider.dart';
 import 'movie_card.dart';
 
@@ -196,10 +197,11 @@ class _MoviesScreenState extends ConsumerState<MoviesScreen> {
           return MovieCard(
             movie: movie,
             onTap: () {
-              // Film detay sayfasına git (Aşama 3'te implement edeceğiz)
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${movie.title} detayları yakında...'),
+              // Film detay sayfasına git
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MovieDetailScreen(movieId: movie.id),
                 ),
               );
             },

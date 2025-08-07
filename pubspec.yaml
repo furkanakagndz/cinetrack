@@ -40,7 +40,6 @@ dependencies:
   riverpod_annotation: ^2.3.5
   
   # Code Generation
-  freezed_annotation: ^2.4.4
   json_annotation: ^4.9.0
   
   # HTTP Client
@@ -70,7 +69,6 @@ dev_dependencies:
   # Code Generation
   build_runner: ^2.4.9
   riverpod_generator: ^2.4.0
-  freezed: ^2.5.7
   json_serializable: ^6.8.0
   
   # Testing
