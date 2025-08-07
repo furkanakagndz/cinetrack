@@ -1,0 +1,132 @@
+# Riverpod Kullanım Kuralları ve Best Practices
+
+## Provider Türleri ve Kullanım Alanları:
+
+### 1. StateProvider
+- Basit state yönetimi için kullanılır
+- Örnek: `final counterProvider = StateProvider<int>((ref) => 0);`
+
+### 2. StateNotifierProvider
+- Karmaşık state yönetimi için kullanılır
+- Örnek: `final moviesProvider = StateNotifierProvider<MoviesNotifier, MoviesState>((ref) => MoviesNotifier());`
+
+### 3. FutureProvider
+- Async işlemler için kullanılır
+- Örnek: `final movieDetailsProvider = FutureProvider<Movie>((ref, movieId) async => await MovieService.getMovie(movieId));`
+
+### 4. StreamProvider
+- Stream verileri için kullanılır
+- Örnek: `final watchlistStreamProvider = StreamProvider<List<Movie>>((ref) => WatchlistService.watchlistStream());`
+
+## Provider Organizasyonu:
+
+### Provider Dosya Yapısı:
+```dart
+// core/providers/movies_provider.dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+// 1. State sınıfı
+class MoviesState {
+  final List<Movie> movies;
+  final bool isLoading;
+  final String? error;
+  
+  const MoviesState({
+    this.movies = const [],
+    this.isLoading = false,
+    this.error,
+  });
+  
+  MoviesState copyWith({
+    List<Movie>? movies,
+    bool? isLoading,
+    String? error,
+  }) {
+    return MoviesState(
+      movies: movies ?? this.movies,
+      isLoading: isLoading ?? this.isLoading,
+      error: error ?? this.error,
+    );
+  }
+}
+
+// 2. Notifier sınıfı
+class MoviesNotifier extends StateNotifier<MoviesState> {
+  MoviesNotifier() : super(const MoviesState());
+  
+  Future<void> fetchMovies() async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final movies = await MovieService.getMovies();
+      state = state.copyWith(movies: movies, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(error: e.toString(), isLoading: false);
+    }
+  }
+}
+
+// 3. Provider tanımı
+final moviesProvider = StateNotifierProvider<MoviesNotifier, MoviesState>((ref) {
+  return MoviesNotifier();
+});
+```
+
+## Widget'larda Provider Kullanımı:
+
+### ConsumerWidget Kullanımı:
+```dart
+class MoviesScreen extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final moviesState = ref.watch(moviesProvider);
+    
+    return Scaffold(
+      body: moviesState.isLoading
+          ? CircularProgressIndicator()
+          : ListView.builder(
+              itemCount: moviesState.movies.length,
+              itemBuilder: (context, index) {
+                return MovieCard(movie: moviesState.movies[index]);
+              },
+            ),
+    );
+  }
+}
+```
+
+### Consumer Kullanımı:
+```dart
+Consumer(
+  builder: (context, ref, child) {
+    final moviesState = ref.watch(moviesProvider);
+    return Text('${moviesState.movies.length} film bulundu');
+  },
+)
+```
+
+## Provider Bağımlılıkları:
+
+### Provider'lar arası bağımlılık:
+```dart
+final movieDetailsProvider = FutureProvider<Movie>((ref, movieId) async {
+  final movieService = ref.read(movieServiceProvider);
+  return await movieService.getMovie(movieId);
+});
+
+final movieServiceProvider = Provider<MovieService>((ref) {
+  return MovieService();
+});
+```
+
+## Best Practices:
+
+1. **Provider isimlendirme**: `snake_case` kullanın ve sonuna `Provider` ekleyin
+2. **State sınıfları**: Immutable olmalı ve `copyWith` metodu içermeli
+3. **Error handling**: Her async provider'da error handling yapın
+4. **Loading states**: Loading durumlarını mutlaka handle edin
+5. **Provider scope**: Gereksiz rebuild'leri önlemek için `select` kullanın
+6. **Dispose**: Manuel dispose gerektiren provider'larda `ref.onDispose` kullanın
+description:
+globs:
+alwaysApply: false
+---

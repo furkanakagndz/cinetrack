@@ -1,0 +1,42 @@
+# CineTrack - Film İzleme ve Takip Uygulaması Proje Yapısı
+
+Bu proje Riverpod state management kullanarak geliştirilmiş bir Film İzleme ve Takip uygulamasıdır.
+
+## Proje Yapısı
+
+### Ana Klasörler:
+- `lib/` - Ana Dart kodları
+  - `main.dart` - Uygulama giriş noktası
+  - `app/` - Uygulama seviyesi widget'lar
+  - `features/` - Özellik bazlı modüller
+  - `core/` - Ortak kullanılan kodlar
+  - `shared/` - Paylaşılan widget'lar ve utility'ler
+
+### Features Klasörü:
+Her özellik kendi klasöründe organize edilir:
+- `features/movies/` - Film listesi ve detayları
+- `features/watchlist/` - İzleme listesi
+- `features/search/` - Film arama
+- `features/profile/` - Kullanıcı profili
+
+### Core Klasörü:
+- `core/providers/` - Riverpod provider'ları
+- `core/models/` - Veri modelleri
+- `core/services/` - API servisleri
+- `core/utils/` - Yardımcı fonksiyonlar
+- `core/constants/` - Sabitler
+
+### Shared Klasörü:
+- `shared/widgets/` - Yeniden kullanılabilir widget'lar
+- `shared/theme/` - Tema ayarları
+- `shared/extensions/` - Dart extension'ları
+
+## Dosya İsimlendirme Kuralları:
+- Widget dosyaları: `snake_case.dart`
+- Provider dosyaları: `snake_case_provider.dart`
+- Model dosyaları: `snake_case_model.dart`
+- Service dosyaları: `snake_case_service.dart`
+description:
+globs:
+alwaysApply: false
+---

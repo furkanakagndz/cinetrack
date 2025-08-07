@@ -1,0 +1,289 @@
+# Flutter ve Dart Kod Yazım Standartları
+
+## Genel Kurallar:
+
+### 1. Dosya İsimlendirme
+- Dart dosyaları: `snake_case.dart`
+- Widget dosyaları: `snake_case_widget.dart`
+- Provider dosyaları: `snake_case_provider.dart`
+- Model dosyaları: `snake_case_model.dart`
+
+### 2. Sınıf İsimlendirme
+- Sınıflar: `PascalCase`
+- Örnek: `MovieCard`, `MoviesProvider`, `UserProfile`
+
+### 3. Değişken ve Fonksiyon İsimlendirme
+- Değişkenler: `camelCase`
+- Fonksiyonlar: `camelCase`
+- Sabitler: `SCREAMING_SNAKE_CASE`
+- Örnek: `movieTitle`, `fetchMovies()`, `API_BASE_URL`
+
+## Widget Yazım Kuralları:
+
+### 1. StatelessWidget Kullanımı
+```dart
+class MovieCard extends StatelessWidget {
+  final Movie movie;
+  final VoidCallback? onTap;
+  
+  const MovieCard({
+    super.key,
+    required this.movie,
+    this.onTap,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        title: Text(movie.title),
+        subtitle: Text(movie.overview),
+        onTap: onTap,
+      ),
+    );
+  }
+}
+```
+
+### 2. ConsumerWidget Kullanımı
+```dart
+class MoviesScreen extends ConsumerWidget {
+  const MoviesScreen({super.key});
+  
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final moviesState = ref.watch(moviesProvider);
+    
+    return Scaffold(
+      appBar: AppBar(title: const Text('Filmler')),
+      body: _buildBody(moviesState),
+    );
+  }
+  
+  Widget _buildBody(MoviesState state) {
+    if (state.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
+    if (state.error != null) {
+      return Center(child: Text('Hata: ${state.error}'));
+    }
+    
+    return ListView.builder(
+      itemCount: state.movies.length,
+      itemBuilder: (context, index) {
+        return MovieCard(movie: state.movies[index]);
+      },
+    );
+  }
+}
+```
+
+## Model Sınıfları:
+
+### 1. Freezed Kullanımı
+```dart
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'movie.freezed.dart';
+part 'movie.g.dart';
+
+@freezed
+class Movie with _$Movie {
+  const factory Movie({
+    required int id,
+    required String title,
+    required String overview,
+    required String posterPath,
+    required double voteAverage,
+    required DateTime releaseDate,
+    @Default([]) List<String> genres,
+  }) = _Movie;
+  
+  factory Movie.fromJson(Map<String, dynamic> json) => _$MovieFromJson(json);
+}
+```
+
+### 2. State Sınıfları
+```dart
+@freezed
+class MoviesState with _$MoviesState {
+  const factory MoviesState({
+    @Default([]) List<Movie> movies,
+    @Default(false) bool isLoading,
+    String? error,
+    @Default(1) int currentPage,
+    @Default(false) bool hasReachedMax,
+  }) = _MoviesState;
+}
+```
+
+## Provider Yazım Kuralları:
+
+### 1. StateNotifier Kullanımı
+```dart
+class MoviesNotifier extends StateNotifier<MoviesState> {
+  MoviesNotifier() : super(const MoviesState());
+  
+  Future<void> fetchMovies({bool refresh = false}) async {
+    if (refresh) {
+      state = state.copyWith(isLoading: true, error: null);
+    }
+    
+    try {
+      final movies = await _movieService.getMovies(page: state.currentPage);
+      
+      state = state.copyWith(
+        movies: refresh ? movies : [...state.movies, ...movies],
+        isLoading: false,
+        currentPage: state.currentPage + 1,
+        hasReachedMax: movies.isEmpty,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
+  
+  void clearError() {
+    state = state.copyWith(error: null);
+  }
+}
+```
+
+### 2. Provider Tanımları
+```dart
+final moviesProvider = StateNotifierProvider<MoviesNotifier, MoviesState>((ref) {
+  final movieService = ref.watch(movieServiceProvider);
+  return MoviesNotifier(movieService);
+});
+
+final movieServiceProvider = Provider<MovieService>((ref) {
+  return MovieService();
+});
+```
+
+## Error Handling:
+
+### 1. AsyncValue Kullanımı
+```dart
+class MoviesScreen extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final moviesAsync = ref.watch(moviesProvider);
+    
+    return moviesAsync.when(
+      data: (movies) => MovieListView(movies: movies),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Hata: $error'),
+            ElevatedButton(
+              onPressed: () => ref.refresh(moviesProvider),
+              child: const Text('Tekrar Dene'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+## Performance Optimizasyonu:
+
+### 1. const Constructor Kullanımı
+```dart
+// ✅ İyi
+const MovieCard({super.key, required this.movie});
+
+// ❌ Kötü
+MovieCard({super.key, required this.movie});
+```
+
+### 2. Gereksiz Rebuild'leri Önleme
+```dart
+// ✅ İyi - Sadece gerekli alanı dinle
+final movieTitle = ref.watch(movieProvider.select((movie) => movie.title));
+
+// ❌ Kötü - Tüm state'i dinle
+final movie = ref.watch(movieProvider);
+```
+
+### 3. ListView.builder Kullanımı
+```dart
+// ✅ İyi - Büyük listeler için
+ListView.builder(
+  itemCount: movies.length,
+  itemBuilder: (context, index) => MovieCard(movie: movies[index]),
+)
+
+// ❌ Kötü - Küçük listeler için uygun değil
+Column(
+  children: movies.map((movie) => MovieCard(movie: movie)).toList(),
+)
+```
+
+## Test Yazım Kuralları:
+
+### 1. Widget Test
+```dart
+void main() {
+  group('MovieCard Widget', () {
+    testWidgets('should display movie title', (tester) async {
+      const movie = Movie(
+        id: 1,
+        title: 'Test Movie',
+        overview: 'Test overview',
+        posterPath: '/test.jpg',
+        voteAverage: 8.5,
+        releaseDate: DateTime(2023, 1, 1),
+      );
+      
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MovieCard(movie: movie),
+        ),
+      );
+      
+      expect(find.text('Test Movie'), findsOneWidget);
+    });
+  });
+}
+```
+
+### 2. Provider Test
+```dart
+void main() {
+  group('MoviesNotifier', () {
+    late ProviderContainer container;
+    
+    setUp(() {
+      container = ProviderContainer();
+    });
+    
+    tearDown(() {
+      container.dispose();
+    });
+    
+    test('should fetch movies successfully', () async {
+      final notifier = container.read(moviesProvider.notifier);
+      
+      await notifier.fetchMovies();
+      
+      final state = container.read(moviesProvider);
+      expect(state.movies, isNotEmpty);
+      expect(state.isLoading, false);
+      expect(state.error, null);
+    });
+  });
+}
+```
+description:
+globs:
+alwaysApply: false
+---

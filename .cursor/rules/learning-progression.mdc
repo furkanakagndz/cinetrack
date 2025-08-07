@@ -1,0 +1,225 @@
+# CineTrack - Riverpod Öğrenme Süreci
+
+Bu proje Riverpod'u adım adım öğretmek için tasarlanmıştır. Her aşama bir önceki aşamanın üzerine inşa edilir.
+
+## Öğrenme Aşamaları:
+
+### Aşama 1: Temel Riverpod Kavramları
+**Hedef**: StateProvider ve ConsumerWidget kullanımını öğrenmek
+
+**Öğrenilecek Konular**:
+- StateProvider nedir ve nasıl kullanılır
+- ConsumerWidget ile provider'ları dinleme
+- Basit state yönetimi
+
+**Pratik Uygulama**:
+- Basit sayaç uygulaması
+- Film favori durumu toggle
+- Arama terimi state'i
+
+**Dosyalar**:
+- `lib/features/basic_counter/` - Sayaç örneği
+- `lib/features/movie_favorites/` - Favori durumu
+- `lib/features/search_state/` - Arama state'i
+
+### Aşama 2: StateNotifier ve Karmaşık State
+**Hedef**: StateNotifier ile karmaşık state yönetimini öğrenmek
+
+**Öğrenilecek Konular**:
+- StateNotifier sınıfı ve kullanımı
+- copyWith metodu ile immutable state
+- Loading, error, success durumları
+
+**Pratik Uygulama**:
+- Film listesi yönetimi
+- Film detay sayfası
+- İzleme listesi yönetimi
+
+**Dosyalar**:
+- `lib/features/movies/` - Film listesi
+- `lib/features/movie_details/` - Film detayları
+- `lib/features/watchlist/` - İzleme listesi
+
+### Aşama 3: Async İşlemler ve FutureProvider
+**Hedef**: Async işlemleri ve API çağrılarını öğrenmek
+
+**Öğrenilecek Konular**:
+- FutureProvider kullanımı
+- AsyncValue ile loading/error handling
+- API entegrasyonu
+
+**Pratik Uygulama**:
+- TMDB API'den film verisi çekme
+- Film arama fonksiyonu
+- Film detayları yükleme
+
+**Dosyalar**:
+- `lib/core/services/` - API servisleri
+- `lib/features/movies/` - Film API entegrasyonu
+- `lib/features/search/` - Arama fonksiyonu
+
+### Aşama 4: Provider Bağımlılıkları ve Family
+**Hedef**: Provider'lar arası bağımlılıkları ve parametreli provider'ları öğrenmek
+
+**Öğrenilecek Konular**:
+- Provider'lar arası bağımlılık
+- Family provider'ları
+- Provider scope ve lifecycle
+
+**Pratik Uygulama**:
+- Film detay sayfası için family provider
+- Kullanıcı profili yönetimi
+- Film kategorileri
+
+**Dosyalar**:
+- `lib/features/movie_details/` - Family provider örneği
+- `lib/features/profile/` - Kullanıcı profili
+- `lib/features/categories/` - Film kategorileri
+
+### Aşama 5: StreamProvider ve Gerçek Zamanlı Veri
+**Hedef**: Stream verilerini ve gerçek zamanlı güncellemeleri öğrenmek
+
+**Öğrenilecek Konular**:
+- StreamProvider kullanımı
+- Gerçek zamanlı veri dinleme
+- WebSocket entegrasyonu
+
+**Pratik Uygulama**:
+- Canlı film puanları
+- Kullanıcı aktivite akışı
+- Gerçek zamanlı bildirimler
+
+**Dosyalar**:
+- `lib/features/live_ratings/` - Canlı puanlar
+- `lib/features/activity_feed/` - Aktivite akışı
+- `lib/features/notifications/` - Bildirimler
+
+### Aşama 6: Advanced Patterns ve Optimizasyon
+**Hedef**: Gelişmiş pattern'leri ve performans optimizasyonunu öğrenmek
+
+**Öğrenilecek Konular**:
+- Provider select kullanımı
+- keepAlive ve autoDispose
+- Provider override'ları
+- Test yazımı
+
+**Pratik Uygulama**:
+- Performans optimizasyonu
+- Unit testler
+- Integration testler
+
+**Dosyalar**:
+- `lib/features/optimized_movies/` - Optimizasyon örnekleri
+- `test/` - Test dosyaları
+- `lib/core/utils/` - Utility fonksiyonlar
+
+## Öğrenme Kaynakları:
+
+### 1. Her Aşama İçin Gerekli Dosyalar:
+```
+lib/
+├── features/
+│   ├── basic_counter/          # Aşama 1
+│   ├── movie_favorites/        # Aşama 1
+│   ├── search_state/           # Aşama 1
+│   ├── movies/                 # Aşama 2
+│   ├── movie_details/          # Aşama 2, 4
+│   ├── watchlist/              # Aşama 2
+│   ├── search/                 # Aşama 3
+│   ├── profile/                # Aşama 4
+│   ├── categories/             # Aşama 4
+│   ├── live_ratings/           # Aşama 5
+│   ├── activity_feed/          # Aşama 5
+│   ├── notifications/          # Aşama 5
+│   └── optimized_movies/       # Aşama 6
+├── core/
+│   ├── services/               # Aşama 3
+│   ├── providers/              # Tüm aşamalar
+│   ├── models/                 # Tüm aşamalar
+│   └── utils/                  # Aşama 6
+└── shared/
+    ├── widgets/                # Tüm aşamalar
+    └── theme/                  # Tüm aşamalar
+```
+
+### 2. Her Aşama İçin Test Dosyaları:
+```
+test/
+├── features/
+│   ├── basic_counter_test.dart
+│   ├── movies_test.dart
+│   ├── search_test.dart
+│   └── watchlist_test.dart
+├── providers/
+│   ├── movies_provider_test.dart
+│   ├── search_provider_test.dart
+│   └── watchlist_provider_test.dart
+└── mocks/
+    ├── mock_movie_repository.dart
+    └── mock_api_service.dart
+```
+
+## Öğrenme Kontrol Listesi:
+
+### Aşama 1 Kontrol Listesi:
+- [ ] StateProvider oluşturma ve kullanma
+- [ ] ConsumerWidget ile provider dinleme
+- [ ] Basit state güncelleme
+- [ ] Provider scope anlama
+
+### Aşama 2 Kontrol Listesi:
+- [ ] StateNotifier sınıfı oluşturma
+- [ ] copyWith metodu kullanma
+- [ ] Loading/error state yönetimi
+- [ ] Immutable state pattern
+
+### Aşama 3 Kontrol Listesi:
+- [ ] FutureProvider kullanma
+- [ ] AsyncValue ile state yönetimi
+- [ ] API çağrıları yapma
+- [ ] Error handling
+
+### Aşama 4 Kontrol Listesi:
+- [ ] Provider bağımlılıkları
+- [ ] Family provider kullanma
+- [ ] Provider override'ları
+- [ ] Dependency injection
+
+### Aşama 5 Kontrol Listesi:
+- [ ] StreamProvider kullanma
+- [ ] Stream verilerini dinleme
+- [ ] Gerçek zamanlı güncellemeler
+- [ ] WebSocket entegrasyonu
+
+### Aşama 6 Kontrol Listesi:
+- [ ] Provider select kullanma
+- [ ] Performance optimizasyonu
+- [ ] Unit test yazma
+- [ ] Integration test yazma
+
+## Öğrenme İpuçları:
+
+### 1. Pratik Yapma:
+- Her aşamada mutlaka kod yazın
+- Örnekleri değiştirip deneyin
+- Hata yapmaktan korkmayın
+
+### 2. Debugging:
+- Provider'ları debug etmek için `ref.debugPrint` kullanın
+- State değişikliklerini takip edin
+- Provider scope'larını anlayın
+
+### 3. Best Practices:
+- Provider isimlendirme kurallarına uyun
+- State sınıflarını immutable yapın
+- Error handling'i unutmayın
+- Performance optimizasyonu yapın
+
+### 4. Kaynaklar:
+- Riverpod resmi dokümantasyonu
+- Flutter resmi dokümantasyonu
+- Community örnekleri ve blog yazıları
+description:
+globs:
+alwaysApply: false
+---

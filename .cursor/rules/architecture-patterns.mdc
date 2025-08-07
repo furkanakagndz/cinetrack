@@ -1,0 +1,393 @@
+# CineTrack Mimari Pattern'leri ve Tasarım Prensipleri
+
+## Clean Architecture Prensipleri:
+
+### 1. Katmanlı Mimari
+```
+lib/
+├── presentation/     # UI Katmanı
+│   ├── pages/       # Sayfalar
+│   ├── widgets/     # Widget'lar
+│   └── providers/   # Riverpod Provider'ları
+├── domain/          # İş Mantığı Katmanı
+│   ├── entities/    # Varlıklar
+│   ├── repositories/ # Repository Interface'leri
+│   └── usecases/    # Use Case'ler
+└── data/            # Veri Katmanı
+    ├── repositories/ # Repository Implementasyonları
+    ├── datasources/  # Veri Kaynakları
+    └── models/      # Veri Modelleri
+```
+
+### 2. Dependency Injection
+```dart
+// Domain katmanında repository interface'i
+abstract class MovieRepository {
+  Future<List<Movie>> getMovies();
+  Future<Movie> getMovieById(int id);
+  Future<void> addToWatchlist(Movie movie);
+}
+
+// Data katmanında implementation
+class MovieRepositoryImpl implements MovieRepository {
+  final MovieDataSource _dataSource;
+  
+  MovieRepositoryImpl(this._dataSource);
+  
+  @override
+  Future<List<Movie>> getMovies() async {
+    final movies = await _dataSource.getMovies();
+    return movies;
+  }
+}
+
+// Provider ile DI
+final movieRepositoryProvider = Provider<MovieRepository>((ref) {
+  final dataSource = ref.watch(movieDataSourceProvider);
+  return MovieRepositoryImpl(dataSource);
+});
+```
+
+## Feature-Based Architecture:
+
+### 1. Feature Organizasyonu
+```
+features/
+├── movies/
+│   ├── presentation/
+│   │   ├── pages/
+│   │   ├── widgets/
+│   │   └── providers/
+│   ├── domain/
+│   │   ├── entities/
+│   │   ├── repositories/
+│   │   └── usecases/
+│   └── data/
+│       ├── repositories/
+│       ├── datasources/
+│       └── models/
+├── watchlist/
+│   └── ...
+└── search/
+    └── ...
+```
+
+### 2. Feature Provider'ları
+```dart
+// features/movies/providers/movies_provider.dart
+final moviesProvider = StateNotifierProvider<MoviesNotifier, MoviesState>((ref) {
+  final repository = ref.watch(movieRepositoryProvider);
+  return MoviesNotifier(repository);
+});
+
+// features/watchlist/providers/watchlist_provider.dart
+final watchlistProvider = StateNotifierProvider<WatchlistNotifier, WatchlistState>((ref) {
+  final repository = ref.watch(watchlistRepositoryProvider);
+  return WatchlistNotifier(repository);
+});
+```
+
+## Repository Pattern:
+
+### 1. Repository Interface
+```dart
+// domain/repositories/movie_repository.dart
+abstract class MovieRepository {
+  Future<List<Movie>> getPopularMovies();
+  Future<List<Movie>> searchMovies(String query);
+  Future<Movie> getMovieDetails(int movieId);
+  Future<List<Movie>> getSimilarMovies(int movieId);
+}
+```
+
+### 2. Repository Implementation
+```dart
+// data/repositories/movie_repository_impl.dart
+class MovieRepositoryImpl implements MovieRepository {
+  final MovieRemoteDataSource _remoteDataSource;
+  final MovieLocalDataSource _localDataSource;
+  
+  MovieRepositoryImpl(this._remoteDataSource, this._localDataSource);
+  
+  @override
+  Future<List<Movie>> getPopularMovies() async {
+    try {
+      final movies = await _remoteDataSource.getPopularMovies();
+      await _localDataSource.cacheMovies(movies);
+      return movies;
+    } catch (e) {
+      return await _localDataSource.getCachedMovies();
+    }
+  }
+}
+```
+
+## Use Case Pattern:
+
+### 1. Use Case Tanımı
+```dart
+// domain/usecases/get_movies_usecase.dart
+class GetMoviesUseCase {
+  final MovieRepository _repository;
+  
+  GetMoviesUseCase(this._repository);
+  
+  Future<List<Movie>> call() async {
+    return await _repository.getPopularMovies();
+  }
+}
+
+// domain/usecases/search_movies_usecase.dart
+class SearchMoviesUseCase {
+  final MovieRepository _repository;
+  
+  SearchMoviesUseCase(this._repository);
+  
+  Future<List<Movie>> call(String query) async {
+    if (query.isEmpty) return [];
+    return await _repository.searchMovies(query);
+  }
+}
+```
+
+### 2. Use Case Provider'ları
+```dart
+// core/providers/usecase_providers.dart
+final getMoviesUseCaseProvider = Provider<GetMoviesUseCase>((ref) {
+  final repository = ref.watch(movieRepositoryProvider);
+  return GetMoviesUseCase(repository);
+});
+
+final searchMoviesUseCaseProvider = Provider<SearchMoviesUseCase>((ref) {
+  final repository = ref.watch(movieRepositoryProvider);
+  return SearchMoviesUseCase(repository);
+});
+```
+
+## State Management Pattern:
+
+### 1. State Sınıfları
+```dart
+// features/movies/domain/entities/movies_state.dart
+@freezed
+class MoviesState with _$MoviesState {
+  const factory MoviesState({
+    @Default([]) List<Movie> movies,
+    @Default(false) bool isLoading,
+    String? error,
+    @Default(1) int currentPage,
+    @Default(false) bool hasReachedMax,
+    @Default('') String searchQuery,
+  }) = _MoviesState;
+}
+```
+
+### 2. Notifier Sınıfları
+```dart
+// features/movies/providers/movies_notifier.dart
+class MoviesNotifier extends StateNotifier<MoviesState> {
+  final GetMoviesUseCase _getMoviesUseCase;
+  final SearchMoviesUseCase _searchMoviesUseCase;
+  
+  MoviesNotifier(this._getMoviesUseCase, this._searchMoviesUseCase)
+      : super(const MoviesState());
+  
+  Future<void> loadMovies({bool refresh = false}) async {
+    if (refresh) {
+      state = state.copyWith(isLoading: true, error: null);
+    }
+    
+    try {
+      final movies = await _getMoviesUseCase();
+      state = state.copyWith(
+        movies: refresh ? movies : [...state.movies, ...movies],
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
+  
+  Future<void> searchMovies(String query) async {
+    state = state.copyWith(
+      searchQuery: query,
+      isLoading: true,
+      error: null,
+    );
+    
+    try {
+      final movies = await _searchMoviesUseCase(query);
+      state = state.copyWith(
+        movies: movies,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
+}
+```
+
+## Error Handling Pattern:
+
+### 1. Custom Exception'lar
+```dart
+// core/exceptions/app_exceptions.dart
+abstract class AppException implements Exception {
+  final String message;
+  const AppException(this.message);
+}
+
+class NetworkException extends AppException {
+  const NetworkException(String message) : super(message);
+}
+
+class CacheException extends AppException {
+  const CacheException(String message) : super(message);
+}
+
+class ValidationException extends AppException {
+  const ValidationException(String message) : super(message);
+}
+```
+
+### 2. Result Pattern
+```dart
+// core/result/result.dart
+@freezed
+class Result<T> with _$Result<T> {
+  const factory Result.success(T data) = Success<T>;
+  const factory Result.failure(String message) = Failure<T>;
+}
+
+// Kullanım
+Future<Result<List<Movie>>> getMovies() async {
+  try {
+    final movies = await _repository.getMovies();
+    return Result.success(movies);
+  } catch (e) {
+    return Result.failure(e.toString());
+  }
+}
+```
+
+## Navigation Pattern:
+
+### 1. Route Tanımları
+```dart
+// core/routes/app_routes.dart
+class AppRoutes {
+  static const String home = '/';
+  static const String movieDetails = '/movie/:id';
+  static const String search = '/search';
+  static const String watchlist = '/watchlist';
+  static const String profile = '/profile';
+}
+
+// core/routes/app_router.dart
+final appRouterProvider = Provider<GoRouter>((ref) {
+  return GoRouter(
+    initialLocation: AppRoutes.home,
+    routes: [
+      GoRoute(
+        path: AppRoutes.home,
+        builder: (context, state) => const HomePage(),
+      ),
+      GoRoute(
+        path: AppRoutes.movieDetails,
+        builder: (context, state) {
+          final movieId = int.parse(state.pathParameters['id']!);
+          return MovieDetailsPage(movieId: movieId);
+        },
+      ),
+    ],
+  );
+});
+```
+
+### 2. Navigation Provider
+```dart
+// core/providers/navigation_provider.dart
+final navigationProvider = Provider<NavigationService>((ref) {
+  return NavigationService();
+});
+
+class NavigationService {
+  void navigateToMovieDetails(BuildContext context, int movieId) {
+    context.go('/movie/$movieId');
+  }
+  
+  void navigateToSearch(BuildContext context) {
+    context.go('/search');
+  }
+}
+```
+
+## Testing Pattern:
+
+### 1. Mock Repository
+```dart
+// test/mocks/mock_movie_repository.dart
+class MockMovieRepository extends Mock implements MovieRepository {
+  @override
+  Future<List<Movie>> getMovies() async {
+    return [
+      const Movie(
+        id: 1,
+        title: 'Test Movie',
+        overview: 'Test overview',
+        posterPath: '/test.jpg',
+        voteAverage: 8.5,
+        releaseDate: DateTime(2023, 1, 1),
+      ),
+    ];
+  }
+}
+```
+
+### 2. Provider Test
+```dart
+// test/providers/movies_provider_test.dart
+void main() {
+  group('MoviesProvider', () {
+    late ProviderContainer container;
+    late MockMovieRepository mockRepository;
+    
+    setUp(() {
+      mockRepository = MockMovieRepository();
+      container = ProviderContainer(
+        overrides: [
+          movieRepositoryProvider.overrideWithValue(mockRepository),
+        ],
+      );
+    });
+    
+    tearDown(() {
+      container.dispose();
+    });
+    
+    test('should load movies successfully', () async {
+      when(() => mockRepository.getMovies())
+          .thenAnswer((_) async => [const Movie(...)]);
+      
+      final notifier = container.read(moviesProvider.notifier);
+      await notifier.loadMovies();
+      
+      final state = container.read(moviesProvider);
+      expect(state.movies, isNotEmpty);
+      expect(state.isLoading, false);
+      expect(state.error, null);
+    });
+  });
+}
+```
+description:
+globs:
+alwaysApply: false
+---
